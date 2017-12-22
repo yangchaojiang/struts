@@ -1,9 +1,6 @@
 package com.xjcy.struts;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -63,13 +60,8 @@ public class StrutsFilter implements Filter
 			request.setAttribute("basePath", getBasePath(request));
 			if (action.isPatternAction())
 			{
-				Map<String, String> map = action.getParaValues();
-				Set<Entry<String, String>> entries = map.entrySet();
-				for (Entry<String, String> entry : entries)
-				{
-					request.setAttribute(entry.getKey(), entry.getValue());
-					logger.debug("赋值PatternAction：" + entry.getKey() + "=" + entry.getValue());
-				}
+				action.fillRequest(request);
+				logger.debug("赋值PatternAction：" + servletPath);
 			}
 			HttpServletResponse response = (HttpServletResponse) arg1;
 			Object resultObj;

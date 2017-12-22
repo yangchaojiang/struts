@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -71,11 +72,6 @@ public class ActionMapper
 		return this.controller;
 	}
 
-	public List<String> getParas()
-	{
-		return this.paras;
-	}
-
 	public boolean isPatternAction()
 	{
 		return this.paras != null;
@@ -92,13 +88,17 @@ public class ActionMapper
 		}
 	}
 
-	public Map<String, String> getParaValues()
-	{
-		return this.paraValues;
-	}
-
 	public Class<?> getReturnType()
 	{
 		return this.returnType;
+	}
+
+	public void fillRequest(HttpServletRequest request)
+	{
+		Set<String> keys = paraValues.keySet();
+		for (String key : keys)
+		{
+			request.setAttribute(key, paraValues.get(key));
+		}
 	}
 }
