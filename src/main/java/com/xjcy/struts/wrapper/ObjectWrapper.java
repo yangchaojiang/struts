@@ -13,19 +13,21 @@ public class ObjectWrapper
 {
 	private static final Logger logger = Logger.getLogger(ObjectWrapper.class);
 
-	static final String STR_EMPTY = "";
 	static final String STR_VERSION_UID = "serialVersionUID";
+	static final String STR_SLASH = "\"";
+	static final String STR_SLASH_OBJECT = "\":{";
+	static final String STR_SLASH_ARRAY = "\":[";
 	static final Map<String, Field[]> cacheFields = new HashMap<>();
-	static final StringBuilder json = new StringBuilder();
 
 	public String write(Map<String, Object> jsonMap)
 	{
 		long start = System.nanoTime();
+		StringBuilder json = new StringBuilder();
 		// 清空json
 		json.setLength(0);
 		try
 		{
-			appendMap(null, jsonMap);
+			appendMap(null, jsonMap, json);
 			logger.debug("JSON build in " + (System.nanoTime() - start) + "ns");
 		}
 		catch (Exception e)
@@ -35,33 +37,34 @@ public class ObjectWrapper
 		return json.toString();
 	}
 
-	private static void appendObj(String key, Object value)
+	private static void appendObj(String key, Object value, StringBuilder json)
 	{
 		if (value == null || STR_VERSION_UID.equals(key) || value instanceof Logger)
 		{
 			// do noting
 		}
 		else if (value instanceof String || value instanceof CharSequence)
-			json.append("\"").append(key).append("\":\"").append(value).append("\",");
+			json.append(STR_SLASH).append(key).append("\":\"").append(value).append("\",");
 		else if (value instanceof Integer || value instanceof Boolean || value instanceof Long)
-			json.append("\"").append(key).append("\":").append(value).append(",");
+			json.append(STR_SLASH).append(key).append("\":").append(value).append(",");
 		else if (value instanceof Map)
-			appendMap(key, (Map<?, ?>) value);
+			appendMap(key, (Map<?, ?>) value, json);
 		else if (value instanceof Object[] 
 				|| value instanceof int[] 
 				|| value instanceof long[]
+				|| value instanceof byte[]
 				|| value instanceof char[])
-			appendArray(key, value);
+			appendArray(key, value, json);
 		else if (value instanceof Collection)
-			appendList(key, (Collection<?>) value);
+			appendList(key, (Collection<?>) value, json);
 		else
 			// 解析bean
-			appendBean(key, value);
+			appendBean(key, value, json);
 	}
 
-	private static void appendBean(String key, Object value)
+	private static void appendBean(String key, Object value, StringBuilder json)
 	{
-		json.append("\"").append(key).append("\":{");
+		json.append(STR_SLASH).append(key).append(STR_SLASH_OBJECT);
 		Field[] fields = getDeclaredFields(value);
 		int num = 0;
 		Object obj2;
@@ -70,7 +73,7 @@ public class ObjectWrapper
 			obj2 = getObject(field, value);
 			if (obj2 != null)
 			{
-				appendObj(field.getName(), obj2);
+				appendObj(field.getName(), obj2, json);
 				num++;
 			}
 		}
@@ -84,9 +87,10 @@ public class ObjectWrapper
 	 * 
 	 * @param key
 	 * @param value
+	 * @param json 
 	 * @return
 	 */
-	private static void appendMap(String key, Map<?, ?> value)
+	private static void appendMap(String key, Map<?, ?> value, StringBuilder json)
 	{
 		if (key == null)
 		{
@@ -94,7 +98,7 @@ public class ObjectWrapper
 			Set<?> keys = value.keySet();
 			for (Object obj : keys)
 			{
-				appendObj(obj.toString(), value.get(obj));
+				appendObj(obj.toString(), value.get(obj), json);
 			}
 			if (!value.isEmpty())
 				json.delete(json.length() - 1, json.length());
@@ -102,12 +106,12 @@ public class ObjectWrapper
 		}
 		else
 		{
-			json.append("\"").append(key).append("\":[");
+			json.append(STR_SLASH).append(key).append(STR_SLASH_ARRAY);
 			Set<?> keys = value.keySet();
 			for (Object obj : keys)
 			{
 				json.append("{");
-				appendObj(obj.toString(), value.get(obj));
+				appendObj(obj.toString(), value.get(obj), json);
 				json.append("},");
 			}
 			if (!value.isEmpty())
@@ -123,9 +127,9 @@ public class ObjectWrapper
 	 * @param value
 	 * @return
 	 */
-	private static void appendList(String key, Collection<?> value)
+	private static void appendList(String key, Collection<?> value, StringBuilder json)
 	{
-		json.append("\"").append(key).append("\":[");
+		json.append(STR_SLASH).append(key).append(STR_SLASH_ARRAY);
 		Field[] fields;
 		Object obj2;
 		int num;
@@ -139,7 +143,7 @@ public class ObjectWrapper
 				obj2 = getObject(field, obj);
 				if (obj2 != null)
 				{
-					appendObj(field.getName(), obj2);
+					appendObj(field.getName(), obj2, json);
 					num++;
 				}
 			}
@@ -186,20 +190,18 @@ public class ObjectWrapper
 	 * @param array
 	 * @return
 	 */
-	private static void appendArray(String key, Object array)
+	private static void appendArray(String key, Object array, StringBuilder json)
 	{
-		json.append("\"").append(key).append("\":[");
+		json.append(STR_SLASH).append(key).append(STR_SLASH_ARRAY);
 		int len = Array.getLength(array);
 		Object obj;
 		for (int i = 0; i < len; i++)
 		{
 			obj = Array.get(array, i);
-			if (obj instanceof String)
-				json.append("\"").append(obj).append("\"");
-			else if (obj instanceof Integer || obj instanceof Long)
-				json.append("\"").append(obj).append("\"");
-			else
+			if (obj instanceof Integer || obj instanceof Long)
 				json.append(obj);
+			else
+				json.append(STR_SLASH).append(obj).append(STR_SLASH);
 			json.append(",");
 		}
 		if (len > 0)
