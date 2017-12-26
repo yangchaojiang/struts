@@ -86,7 +86,7 @@ public class ResponseWrapper
 			throws IOException, ServletException
 	{
 		int len = text.length();
-		if (WebContextUtils.isGZipEncoding(request) && len > 128)
+		if (WebContextUtils.isGZipEncoding(request) && len > 256)
 		{
 			byte[] data = WebContextUtils.text2byte(text, CONTENT_ENCODING);
 			if (data == null)

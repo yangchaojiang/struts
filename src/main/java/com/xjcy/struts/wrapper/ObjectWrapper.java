@@ -43,9 +43,15 @@ public class ObjectWrapper
 		{
 			// do noting
 		}
-		else if (value instanceof String || value instanceof CharSequence)
-			json.append(STR_SLASH).append(key).append("\":\"").append(value).append("\",");
-		else if (value instanceof Integer || value instanceof Boolean || value instanceof Long)
+		else if (value instanceof String || value instanceof CharSequence){
+			if(value.toString().startsWith("{") || value.toString().startsWith("["))
+				json.append(STR_SLASH).append(key).append("\":").append(value).append(",");
+			else
+				json.append(STR_SLASH).append(key).append("\":\"").append(value).append("\",");
+		}
+		else if (value instanceof Integer 
+				|| value instanceof Boolean 
+				|| value instanceof Long)
 			json.append(STR_SLASH).append(key).append("\":").append(value).append(",");
 		else if (value instanceof Map)
 			appendMap(key, (Map<?, ?>) value, json);

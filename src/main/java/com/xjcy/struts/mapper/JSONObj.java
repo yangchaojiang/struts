@@ -14,7 +14,18 @@ import com.xjcy.struts.wrapper.ObjectWrapper;
 public class JSONObj
 {
 	final Map<String, Object> jsonMap = new HashMap<>();
-	final ObjectWrapper wrapper = new ObjectWrapper();
+	static final ObjectWrapper wrapper = new ObjectWrapper();
+	private String json;
+	
+	public JSONObj()
+	{
+		this(null);
+	}
+
+	public JSONObj(String json)
+	{
+		this.json = json;
+	}
 
 	public JSONObj put(String key, Object val)
 	{
@@ -54,9 +65,9 @@ public class JSONObj
 	@Override
 	public String toString()
 	{
-		//转换成JSON
-		return wrapper.write(jsonMap);
+		if (json == null) 
+			return wrapper.write(jsonMap);// 转换成JSON
+		return json;
 	}
-	
-	
+
 }
