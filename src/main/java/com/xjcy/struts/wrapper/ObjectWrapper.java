@@ -14,6 +14,7 @@ public class ObjectWrapper
 	private static final Logger logger = Logger.getLogger(ObjectWrapper.class);
 
 	static final String STR_VERSION_UID = "serialVersionUID";
+	static final String STR_EMPTY = "";
 	static final String STR_SLASH = "\"";
 	static final String STR_SLASH_OBJECT = "\":{";
 	static final String STR_SLASH_ARRAY = "\":[";
@@ -23,8 +24,6 @@ public class ObjectWrapper
 	{
 		long start = System.nanoTime();
 		StringBuilder json = new StringBuilder();
-		// 清空json
-		json.setLength(0);
 		try
 		{
 			appendMap(null, jsonMap, json);
@@ -67,7 +66,7 @@ public class ObjectWrapper
 			// 解析bean
 			appendBean(key, value, json);
 	}
-
+	
 	private static void appendBean(String key, Object value, StringBuilder json)
 	{
 		json.append(STR_SLASH).append(key).append(STR_SLASH_OBJECT);
@@ -136,26 +135,37 @@ public class ObjectWrapper
 	private static void appendList(String key, Collection<?> value, StringBuilder json)
 	{
 		json.append(STR_SLASH).append(key).append(STR_SLASH_ARRAY);
-		Field[] fields;
-		Object obj2;
-		int num;
+//		Field[] fields;
+//		Object obj2;
+//		int num;
 		for (Object obj : value)
 		{
-			json.append("{");
-			fields = getDeclaredFields(obj);
-			num = 0;
-			for (Field field : fields)
-			{
-				obj2 = getObject(field, obj);
-				if (obj2 != null)
-				{
-					appendObj(field.getName(), obj2, json);
-					num++;
-				}
+			if (obj instanceof String || obj instanceof CharSequence){
+				json.append("\"").append(obj).append("\",");
+			}else if (obj instanceof Integer 
+					|| obj instanceof Boolean 
+					|| obj instanceof Long){
+				json.append(obj).append(",");
 			}
-			if (num > 0)
-				json.delete(json.length() - 1, json.length());
-			json.append("},");
+			else{
+				appendObj(key, obj, json);
+			}
+			
+//			json.append("{");
+//			fields = getDeclaredFields(obj);
+//			num = 0;
+//			for (Field field : fields)
+//			{
+//				obj2 = getObject(field, obj);
+//				if (obj2 != null)
+//				{
+//					appendObj(field.getName(), obj2, json);
+//					num++;
+//				}
+//			}
+//			if (num > 0)
+//				json.delete(json.length() - 1, json.length());
+//			json.append("},");
 		}
 		if (value.size() > 0)
 			json.delete(json.length() - 1, json.length());
