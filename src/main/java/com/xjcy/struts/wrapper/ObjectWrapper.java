@@ -16,6 +16,7 @@ public class ObjectWrapper
 	static final String STR_VERSION_UID = "serialVersionUID";
 	static final String STR_EMPTY = "";
 	static final String STR_SLASH = "\"";
+	static final String STR_OBJECT_LEFT = "{";
 	static final String STR_SLASH_OBJECT = "\":{";
 	static final String STR_SLASH_ARRAY = "\":[";
 	static final Map<String, Field[]> cacheFields = new HashMap<>();
@@ -69,7 +70,10 @@ public class ObjectWrapper
 	
 	private static void appendBean(String key, Object value, StringBuilder json)
 	{
-		json.append(STR_SLASH).append(key).append(STR_SLASH_OBJECT);
+		if(key == null)
+			json.append(STR_OBJECT_LEFT);
+		else
+			json.append(STR_SLASH).append(key).append(STR_SLASH_OBJECT);
 		Field[] fields = getDeclaredFields(value);
 		int num = 0;
 		Object obj2;
@@ -111,17 +115,15 @@ public class ObjectWrapper
 		}
 		else
 		{
-			json.append(STR_SLASH).append(key).append(STR_SLASH_ARRAY);
+			json.append(STR_SLASH).append(key).append(STR_SLASH_OBJECT);
 			Set<?> keys = value.keySet();
 			for (Object obj : keys)
 			{
-				json.append("{");
 				appendObj(obj.toString(), value.get(obj), json);
-				json.append("},");
 			}
 			if (!value.isEmpty())
 				json.delete(json.length() - 1, json.length());
-			json.append("],");
+			json.append("},");
 		}
 	}
 
@@ -148,7 +150,7 @@ public class ObjectWrapper
 				json.append(obj).append(",");
 			}
 			else{
-				appendObj(key, obj, json);
+				appendBean(null, obj, json);
 			}
 			
 //			json.append("{");

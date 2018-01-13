@@ -42,8 +42,7 @@ public class ResponseWrapper
 			dealString(resultObj, request, response);
 		else if (returnType.equals(JSONObj.class))
 			dealJSON((JSONObj) resultObj, request, response);
-		else
-			throw new ServletException("不支持的返回类型 " + returnType.getName());
+		else throw new ServletException("不支持的返回类型 " + returnType.getName());
 	}
 
 	private void dealNone(Object resultObj, HttpServletRequest request, HttpServletResponse response)
@@ -67,6 +66,10 @@ public class ResponseWrapper
 	{
 		String text = resultObj.toString();
 		response.setContentType(WebContextUtils.CONTENT_TYPE_TEXT);
+		// 清缓存
+		response.setHeader("Pragma", "No-cache");
+		response.setHeader("Cache-Control", "no-cache");
+		response.setDateHeader("Expires", 0);
 		writeResponse(response, request, text);
 		if (logger.isDebugEnabled())
 			logger.debug("[TEXT]" + text);
@@ -77,6 +80,11 @@ public class ResponseWrapper
 	{
 		String json = obj.toString();
 		response.setContentType(WebContextUtils.CONTENT_UTF8_JSON);
+		response.addHeader("Access-Control-Allow-Origin", "*");
+		// 清缓存
+		response.setHeader("Pragma", "No-cache");
+		response.setHeader("Cache-Control", "no-cache");
+		response.setDateHeader("Expires", 0);
 		writeResponse(response, request, json);
 		if (logger.isDebugEnabled())
 			logger.debug("[JSON]" + json);
