@@ -15,10 +15,10 @@ import org.apache.tomcat.util.http.fileupload.FileItemStream;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 
-import com.xjcy.struts.context.WebContextUtils;
 import com.xjcy.struts.mapper.MultipartFile;
 import com.xjcy.struts.web.SessionListener;
 import com.xjcy.struts.wrapper.MultipartRequestWrapper;
+import com.xjcy.util.DateEx;
 import com.xjcy.util.StringUtils;
 
 public abstract class ActionSupport
@@ -95,7 +95,7 @@ public abstract class ActionSupport
 						if ("class java.lang.Integer".equals(field.getGenericType().toString()))
 							field.set(tt, Integer.valueOf(str));
 						else if ("class java.util.Date".equals(field.getGenericType().toString()))
-							field.set(tt, WebContextUtils.toDate(str));
+							field.set(tt, DateEx.toDate(str));
 						else if ("class java.lang.Double".equals(field.getGenericType().toString()))
 							field.set(tt, Double.parseDouble(str));
 						else
@@ -153,7 +153,7 @@ public abstract class ActionSupport
 		}
 		this.httpServletRequest = request;
 	}
-
+	
 	protected abstract String processMultipartFile(MultipartFile file) throws IOException;
 
 	public void setResponse(HttpServletResponse response)

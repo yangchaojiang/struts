@@ -15,6 +15,8 @@ import org.apache.log4j.Logger;
 import com.xjcy.struts.context.WebContextUtils;
 import com.xjcy.struts.mapper.JSONObj;
 import com.xjcy.struts.mapper.ModelAndView;
+import com.xjcy.util.ObjectUtils;
+import com.xjcy.util.RedisUtils;
 
 public class ResponseWrapper
 {
@@ -24,11 +26,25 @@ public class ResponseWrapper
 	private final JspWrapper jspWrapper = new JspWrapper();
 	private Class<?> returnType;
 	private Object resultObj;
+	private boolean redisCache;
+	private int cacheSeconds;
 
 	public void setReturnObj(Class<?> returnType, Object resultObj)
 	{
 		this.returnType = returnType;
 		this.resultObj = resultObj;
+	}
+	
+	public void setCache(boolean redisCache, int cacheSeconds)
+	{
+		this.redisCache = redisCache;
+		this.cacheSeconds = cacheSeconds;
+	}
+
+	public void doResponse(HttpServletRequest request, HttpServletResponse response, String json)
+			throws IOException, ServletException
+	{
+		dealJSON(json, request, response);
 	}
 
 	public void doResponse(HttpServletRequest request, HttpServletResponse response)
@@ -75,10 +91,29 @@ public class ResponseWrapper
 			logger.debug("[TEXT]" + text);
 	}
 
+	private void dealJSON(String json, HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException
+	{
+		response.setContentType(WebContextUtils.CONTENT_UTF8_JSON);
+		response.addHeader("Access-Control-Allow-Origin", "*");
+		// 清缓存
+		response.setHeader("Pragma", "No-cache");
+		response.setHeader("Cache-Control", "no-cache");
+		response.setDateHeader("Expires", 0);
+		writeResponse(response, request, json);
+		if (logger.isDebugEnabled())
+			logger.debug("[CACHE_JSON]" + json);
+	}
+
 	private void dealJSON(JSONObj obj, HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException
 	{
 		String json = obj.toString();
+		if (this.redisCache)
+		{
+			String key = request.getServletPath() + "_" + request.getQueryString();
+			RedisUtils.set(key, json, cacheSeconds);
+		}
 		response.setContentType(WebContextUtils.CONTENT_UTF8_JSON);
 		response.addHeader("Access-Control-Allow-Origin", "*");
 		// 清缓存
@@ -96,7 +131,7 @@ public class ResponseWrapper
 		int len = text.length();
 		if (WebContextUtils.isGZipEncoding(request) && len > 256)
 		{
-			byte[] data = WebContextUtils.text2byte(text, CONTENT_ENCODING);
+			byte[] data = ObjectUtils.string2Byte(text, CONTENT_ENCODING);
 			if (data == null)
 				throw new ServletException("Response data can not be null");
 			writeGZipData(response, data, len);

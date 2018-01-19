@@ -1,44 +1,65 @@
 package com.xjcy.struts.mapper;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.tomcat.util.http.fileupload.FileItemStream;
+
+import com.xjcy.util.FileUtils;
 import com.xjcy.util.StringUtils;
 
 public class MultipartFile
 {
-	String fileName;
-	String extension;
-	Long size;
+	private String fileName;
+	private String extension;
+	private Long size;
 	private InputStream inputStream;
 	private String fieldName;
+	private String contentType;
 
 	public Long getSize()
 	{
 		return size;
 	}
 
-	public MultipartFile(String fileName, String fieldName, InputStream inputStream, Long size)
+	public MultipartFile(FileItemStream stream) throws IOException
 	{
-		this.fileName = fileName;
-		this.fieldName = fieldName;
-		this.inputStream = inputStream;
-		this.size = size;
+		this.fileName = stream.getName();
+		this.fieldName = stream.getFieldName();
+		this.inputStream = stream.openStream();
+		this.size = (long) this.inputStream.available();
+		this.contentType = stream.getContentType();
 		if (!StringUtils.isEmpty(fileName))
 		{
 			int last = fileName.lastIndexOf(".");
 			if (last > 0)
-				this.extension = fileName.substring(last);
+				this.extension = fileName.substring(last).toLowerCase();
 			else
 				this.extension = "";
 		}
 	}
-
-	public MultipartFile(FileItemStream stream) throws IOException
+	
+	/**
+	 * 将流保存到文件
+	 * @param dest
+	 * @return
+	 */
+	public boolean transferTo(File dest)
 	{
-		this(stream.getName(), stream.getFieldName(), stream.openStream(),
-				Long.parseLong(stream.openStream().available() + ""));
+		if(this.inputStream == null)
+			return false;
+		return FileUtils.saveFile(dest, this.inputStream);
+	}
+
+	public String getFieldName()
+	{
+		return fieldName;
+	}
+
+	public String getContentType()
+	{
+		return contentType;
 	}
 
 	public InputStream getInputStream()
@@ -78,10 +99,5 @@ public class MultipartFile
 		this.extension = null;
 		this.size = null;
 		this.inputStream = null;
-	}
-
-	public String getFieldName()
-	{
-		return fieldName;
 	}
 }

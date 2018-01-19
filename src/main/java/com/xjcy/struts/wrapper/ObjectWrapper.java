@@ -9,6 +9,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+/**
+ * map转换为JSON
+ * @author YYDF
+ * 2018-01-15
+ */
 public class ObjectWrapper
 {
 	private static final Logger logger = Logger.getLogger(ObjectWrapper.class);
@@ -43,14 +48,17 @@ public class ObjectWrapper
 		{
 			// do noting
 		}
-		else if (value instanceof String || value instanceof CharSequence){
-			if(value.toString().startsWith("{") || value.toString().startsWith("["))
+		else if (value instanceof String || value instanceof CharSequence)
+		{
+			if (value.toString().startsWith("{") 
+					|| value.toString().startsWith("["))
 				json.append(STR_SLASH).append(key).append("\":").append(value).append(",");
-			else
+			else 
 				json.append(STR_SLASH).append(key).append("\":\"").append(value).append("\",");
 		}
 		else if (value instanceof Integer 
 				|| value instanceof Boolean 
+				|| value instanceof Double 
 				|| value instanceof Long)
 			json.append(STR_SLASH).append(key).append("\":").append(value).append(",");
 		else if (value instanceof Map)
@@ -58,22 +66,20 @@ public class ObjectWrapper
 		else if (value instanceof Object[] 
 				|| value instanceof int[] 
 				|| value instanceof long[]
-				|| value instanceof byte[]
+				|| value instanceof byte[] 
 				|| value instanceof char[])
 			appendArray(key, value, json);
 		else if (value instanceof Collection)
 			appendList(key, (Collection<?>) value, json);
-		else
-			// 解析bean
+		else // 解析bean
 			appendBean(key, value, json);
 	}
-	
+
 	private static void appendBean(String key, Object value, StringBuilder json)
 	{
-		if(key == null)
+		if (key == null)
 			json.append(STR_OBJECT_LEFT);
-		else
-			json.append(STR_SLASH).append(key).append(STR_SLASH_OBJECT);
+		else json.append(STR_SLASH).append(key).append(STR_SLASH_OBJECT);
 		Field[] fields = getDeclaredFields(value);
 		int num = 0;
 		Object obj2;
@@ -96,7 +102,7 @@ public class ObjectWrapper
 	 * 
 	 * @param key
 	 * @param value
-	 * @param json 
+	 * @param json
 	 * @return
 	 */
 	private static void appendMap(String key, Map<?, ?> value, StringBuilder json)
@@ -137,44 +143,27 @@ public class ObjectWrapper
 	private static void appendList(String key, Collection<?> value, StringBuilder json)
 	{
 		json.append(STR_SLASH).append(key).append(STR_SLASH_ARRAY);
-//		Field[] fields;
-//		Object obj2;
-//		int num;
 		for (Object obj : value)
 		{
-			if (obj instanceof String || obj instanceof CharSequence){
-				json.append("\"").append(obj).append("\",");
-			}else if (obj instanceof Integer 
-					|| obj instanceof Boolean 
-					|| obj instanceof Long){
+			if (obj instanceof String || obj instanceof CharSequence)
+			{
+				json.append(STR_SLASH).append(obj).append("\",");
+			}
+			else if (obj instanceof Integer || obj instanceof Boolean || obj instanceof Long)
+			{
 				json.append(obj).append(",");
 			}
-			else{
+			else
+			{
 				appendBean(null, obj, json);
 			}
-			
-//			json.append("{");
-//			fields = getDeclaredFields(obj);
-//			num = 0;
-//			for (Field field : fields)
-//			{
-//				obj2 = getObject(field, obj);
-//				if (obj2 != null)
-//				{
-//					appendObj(field.getName(), obj2, json);
-//					num++;
-//				}
-//			}
-//			if (num > 0)
-//				json.delete(json.length() - 1, json.length());
-//			json.append("},");
 		}
 		if (value.size() > 0)
 			json.delete(json.length() - 1, json.length());
 		json.append("],");
 	}
 
-	private static Object getObject(Field field, Object obj)
+	private static synchronized Object getObject(Field field, Object obj)
 	{
 		try
 		{
@@ -218,7 +207,7 @@ public class ObjectWrapper
 			obj = Array.get(array, i);
 			if (obj instanceof Integer || obj instanceof Long)
 				json.append(obj);
-			else
+			else 
 				json.append(STR_SLASH).append(obj).append(STR_SLASH);
 			json.append(",");
 		}

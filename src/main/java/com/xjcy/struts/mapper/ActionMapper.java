@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
 import com.xjcy.struts.ActionSupport;
+import com.xjcy.struts.context.WebContextUtils;
 
 /**
  * Action处理类
@@ -30,6 +31,8 @@ public class ActionMapper
 	private final Class<?> returnType;
 	private final List<String> paras;
 	private final Map<String, String> paraValues = new HashMap<>();
+	private final boolean redisCache;
+	private final int cacheSeconds;
 
 	public ActionMapper(Method method, Class<?> cla)
 	{
@@ -39,6 +42,8 @@ public class ActionMapper
 	public ActionMapper(Method method, Class<?> cla, List<String> paras)
 	{
 		this.actionMethod = method;
+		this.cacheSeconds = WebContextUtils.getRedisCache(method);
+		this.redisCache = cacheSeconds > 0;
 		this.controller = cla;
 		this.returnType = method.getReturnType();
 		this.paras = paras;
@@ -100,5 +105,15 @@ public class ActionMapper
 		{
 			request.setAttribute(key, paraValues.get(key));
 		}
+	}
+
+	public boolean getRedisCache()
+	{
+		return this.redisCache;
+	}
+	
+	public int getCacheSeconds()
+	{
+		return this.cacheSeconds;
 	}
 }

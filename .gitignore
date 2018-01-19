@@ -24,3 +24,4 @@ hs_err_pid*
 /.settings/
 .classpath
 target/classes/META-INF/maven/com.xjcy/struts/pom.properties
+target/classes/META-INF/maven/com.xjcy/struts/pom.properties

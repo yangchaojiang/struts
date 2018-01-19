@@ -2,11 +2,7 @@ package com.xjcy.struts.context;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Properties;
 
 import javax.servlet.ServletContext;
@@ -17,6 +13,7 @@ import org.apache.log4j.Logger;
 import com.xjcy.struts.ActionInterceptor;
 import com.xjcy.struts.ActionSupport;
 import com.xjcy.struts.StrutsInit;
+import com.xjcy.struts.annotation.RedisCache;
 import com.xjcy.struts.annotation.RequestMapping;
 import com.xjcy.struts.web.ContextLoader;
 import com.xjcy.util.StringUtils;
@@ -31,12 +28,6 @@ public abstract class WebContextUtils
 	public static final String CONTENT_TYPE_TEXT = "text/plain;charset=utf-8";
 	public static final String CONTENT_UTF8_JSON = "application/json;charset=UTF-8";
 
-	// date
-	private static final String FORMAT_SHORE_DATE = "yyyy-MM-dd";
-	private static final String FORMAT_DATE = "yyyyMMdd";
-	private static final String FORMAT_LONG_DATE = "yyyy-MM-dd HH:mm:ss";
-	private static final String FORMAT_NUM_DATE = "yyyyMMddHHmmss";
-	private static final String FORMAT_TIME = "HH:mm:ss";
 	// config
 	private static final Properties prop = new Properties();
 	static Boolean isLinux;
@@ -60,17 +51,17 @@ public abstract class WebContextUtils
 		try
 		{
 			prop.clear();
-			InputStream inputStream = WebContextUtils.class.getClassLoader().getResourceAsStream("struts2.properties");
-			if (inputStream != null)
+			InputStream input = WebContextUtils.class.getClassLoader().getResourceAsStream("struts.properties");
+			if (input != null)
 			{
-				prop.load(inputStream);
-				inputStream.close();
+				prop.load(input);
+				input.close();
 			}
-			logger.debug("读取struts2.properties size " + prop.size());
+			logger.debug("读取struts.properties size " + prop.size());
 		}
 		catch (Exception e)
 		{
-			logger.debug("读取struts2.properties faild", e);
+			logger.debug("读取struts.properties faild", e);
 		}
 	}
 
@@ -103,43 +94,6 @@ public abstract class WebContextUtils
 		return flag;
 	}
 
-	public static Date toDate(String str)
-	{
-		String format = null;
-		if (str.length() == 8) // 20111212
-			format = FORMAT_DATE;
-		else if (str.length() == 10)
-		{
-			if (str.contains("-"))
-				format = FORMAT_SHORE_DATE;
-			else if (str.contains(":"))
-				format = FORMAT_TIME;
-			else
-				return toDate(Long.parseLong(str));
-		}
-		else if (str.length() == 14) // 20170707113005
-			format = FORMAT_NUM_DATE;
-		else if (str.length() == 19)
-			format = FORMAT_LONG_DATE;
-		if (format == null)
-			return null;
-		SimpleDateFormat formatter = new SimpleDateFormat(format);
-		try
-		{
-			return formatter.parse(str);
-		}
-		catch (ParseException e)
-		{
-			logger.error("转换Date失败", e);
-		}
-		return null;
-	}
-
-	private static Date toDate(long time)
-	{
-		return new Date(time * 1000);
-	}
-
 	public static boolean isStrutsInit(Class<?> cla)
 	{
 		// 判断Struts2Init是不是cla的父类
@@ -166,6 +120,14 @@ public abstract class WebContextUtils
 		}
 		return null;
 	}
+	
+	public static int getRedisCache(Method method)
+	{
+		RedisCache cache = method.getAnnotation(RedisCache.class);
+		if(cache == null)
+			return -1;
+		return cache.value();
+	}
 
 	public static boolean isLinuxOS()
 	{
@@ -182,18 +144,5 @@ public abstract class WebContextUtils
 		if (outputDir == null)
 			outputDir = context.getRealPath(StrutsContext.CLASS_PATH);
 		return new File(outputDir + "/org/apache/jsp/" + className);
-	}
-
-	public static byte[] text2byte(String text, String encode)
-	{
-		try
-		{
-			return text.getBytes(encode);
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			logger.error("不支持的文本编码", e);
-		}
-		return null;
 	}
 }

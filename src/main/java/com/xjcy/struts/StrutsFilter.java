@@ -17,6 +17,7 @@ import com.xjcy.struts.context.StrutsContext;
 import com.xjcy.struts.context.WebContextUtils;
 import com.xjcy.struts.mapper.ActionMapper;
 import com.xjcy.struts.wrapper.ResponseWrapper;
+import com.xjcy.util.RedisUtils;
 import com.xjcy.util.StringUtils;
 
 public class StrutsFilter implements Filter
@@ -56,6 +57,14 @@ public class StrutsFilter implements Filter
 		}
 		else
 		{
+			HttpServletResponse response = (HttpServletResponse) arg1;
+			String key = servletPath + "_" + request.getQueryString();
+			if (action.getRedisCache() && RedisUtils.exists(key))
+			{
+				String json = RedisUtils.get(key);
+				responseWrapper.doResponse(request, response, json);
+				return;
+			}
 			// 添加主目录属性
 			request.setAttribute("basePath", getBasePath(request));
 			if (action.isPatternAction())
@@ -63,7 +72,7 @@ public class StrutsFilter implements Filter
 				action.fillRequest(request);
 				logger.debug("赋值PatternAction：" + servletPath);
 			}
-			HttpServletResponse response = (HttpServletResponse) arg1;
+
 			Object resultObj;
 			try
 			{
@@ -79,6 +88,7 @@ public class StrutsFilter implements Filter
 				if (resultObj != null)
 				{
 					responseWrapper.setReturnObj(action.getReturnType(), resultObj);
+					responseWrapper.setCache(action.getRedisCache(), action.getCacheSeconds());
 					responseWrapper.doResponse(request, response);
 				}
 			}
