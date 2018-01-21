@@ -70,10 +70,9 @@ public class JspWrapper
 
 	private boolean del(String jspUri, ServletContext context)
 	{
-		int iSep = jspUri.lastIndexOf('/') + 1;
-		String className = JspUtil.makeJavaIdentifier(jspUri.substring(iSep));
-		File file1 = WebContextUtils.getJspServletFile(context, className + ".class");
-		File file2 = WebContextUtils.getJspServletFile(context, className + ".java");
+		String className = JspUtil.makeJavaPackage(jspUri);
+		File file1 = WebContextUtils.getJspServletFile(context, className.replace(".", "/") + ".class");
+		File file2 = WebContextUtils.getJspServletFile(context, className.replace(".", "/") + ".java");
 		return file1.delete() && file2.delete();
 	}
 
@@ -116,9 +115,8 @@ public class JspWrapper
 	{
 		try
 		{
-			int iSep = jspUri.lastIndexOf('/') + 1;
-			String className = JspUtil.makeJavaIdentifier(jspUri.substring(iSep));
-			File servletFile = WebContextUtils.getJspServletFile(context, className + ".class");
+			String className = JspUtil.makeJavaPackage(jspUri);
+			File servletFile = WebContextUtils.getJspServletFile(context, className.replace(".", "/") + ".class");
 			JspClassLoader loader = new JspClassLoader(servletFile, Thread.currentThread().getContextClassLoader());
 			Class<?> cla = loader.loadClass("org.apache.jsp." + className);
 			loader.close();
