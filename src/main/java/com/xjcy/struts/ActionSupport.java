@@ -31,6 +31,9 @@ public abstract class ActionSupport
 	private final Map<String, String> paras = new HashMap<>();
 	private final Map<String, MultipartFile> multipartFiles = new HashMap<>();
 
+	private static final String VAL_UNDEFINED = "undefined";
+	private static final String VAL_NULL = "null";
+
 	protected HttpServletRequest getRequest()
 	{
 		return httpServletRequest;
@@ -53,15 +56,20 @@ public abstract class ActionSupport
 
 	protected String getParameter(String arg0)
 	{
+		String str = null;
 		if (isMultipartRequest)
-			return paras.get(arg0);
-		String str = httpServletRequest.getParameter(arg0);
-		if (str == null || "".equals(str))
+			str = paras.get(arg0);
+		else
 		{
-			Object obj = httpServletRequest.getAttribute(arg0);
-			if (obj != null)
-				return obj.toString();
+			str = httpServletRequest.getParameter(arg0);
+			if (StringUtils.isEmpty(str))
+			{
+				Object obj = httpServletRequest.getAttribute(arg0);
+				str = (obj != null) ? obj.toString() : null;
+			}
 		}
+		if (VAL_UNDEFINED.equals(str))
+			return null;
 		return str;
 	}
 
@@ -72,7 +80,7 @@ public abstract class ActionSupport
 
 	protected <T> T getPostData(Class<T> cla)
 	{
-		return getPostData(cla, "null");
+		return getPostData(cla, VAL_NULL);
 	}
 
 	protected <T> T getPostData(Class<T> cla, String ignore)
@@ -86,7 +94,7 @@ public abstract class ActionSupport
 				String str;
 				for (Field field : fields)
 				{
-					if (!"null".equals(ignore) && field.getName().equals(ignore))
+					if (!VAL_NULL.equals(ignore) && field.getName().equals(ignore))
 						continue;
 					str = getParameter(field.getName());
 					if (!StringUtils.isEmpty(str))
@@ -98,8 +106,7 @@ public abstract class ActionSupport
 							field.set(tt, DateEx.toDate(str));
 						else if ("class java.lang.Double".equals(field.getGenericType().toString()))
 							field.set(tt, Double.parseDouble(str));
-						else
-							field.set(tt, str);
+						else field.set(tt, str);
 						field.setAccessible(false);
 						if (logger.isDebugEnabled())
 							logger.debug("getPostData => " + field.getName() + "[" + str + "]");
@@ -153,7 +160,7 @@ public abstract class ActionSupport
 		}
 		this.httpServletRequest = request;
 	}
-	
+
 	protected abstract String processMultipartFile(MultipartFile file) throws IOException;
 
 	public void setResponse(HttpServletResponse response)
